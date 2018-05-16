@@ -36,10 +36,15 @@ std::string hasData(std::string s) {
 int main() {
   uWS::Hub h;
 
-  PID steering_pid;
-  // TODO: Initialize the pid variable.
+  PID steering_pid(-1.0, 1.0);
+  PID throttle_pid(0.01, 1.0);
 
-  h.onMessage([&steering_pid](uWS::WebSocket<uWS::SERVER>* ws, char *data, size_t length, uWS::OpCode opCode) {
+  // Initialize the pid variable.
+  steering_pid.Init(0.2, 3.0, 0.004);
+  throttle_pid.Init(1.0, 3.0, 0.004);
+
+  h.onMessage([&steering_pid, &throttle_pid](uWS::WebSocket<uWS::SERVER>* ws, char *data,
+                              size_t length, uWS::OpCode opCode) {
     // "42" at the start of the message means there's a websocket message event.
     // The 4 signifies a websocket message
     // The 2 signifies a websocket event
@@ -53,20 +58,16 @@ int main() {
           double cte = std::stod(j[1]["cte"].get<std::string>());
           double speed = std::stod(j[1]["speed"].get<std::string>());
           double angle = std::stod(j[1]["steering_angle"].get<std::string>());
-          double steer_value;
-          /*
-          * TODO: Calcuate steering value here, remember the steering value is
-          * [-1, 1].
-          * NOTE: Feel free to play around with the throttle and speed. Maybe use
-          * another PID controller to control the speed!
-          */
+          double steer_value = steering_pid.Correct(cte);
+          double throttle_value = throttle_pid.Correct(cte);
           
           // DEBUG
-          std::cout << "CTE: " << cte << " Steering Value: " << steer_value << std::endl;
+          std::cout << "CTE: " << cte << " Steering Value: " <<
+              steer_value << std::endl;
 
           json msgJson;
           msgJson["steering_angle"] = steer_value;
-          msgJson["throttle"] = 0.3;
+          msgJson["throttle"] = throttle_value;
           auto msg = "42[\"steer\"," + msgJson.dump() + "]";
           std::cout << msg << std::endl;
           ws->send(msg.data(), msg.length(), uWS::OpCode::TEXT);
@@ -79,9 +80,10 @@ int main() {
     }
   });
 
-  // We don't need this since we're not using HTTP but if it's removed the program
-  // doesn't compile :-(
-  h.onHttpRequest([](uWS::HttpResponse *res, uWS::HttpRequest req, char *data, size_t, size_t) {
+  // We don't need this since we're not using HTTP but if it's removed the
+  // program doesn't compile :-(
+  h.onHttpRequest([](uWS::HttpResponse *res, uWS::HttpRequest req, char *data,
+                     size_t, size_t) {
     const std::string s = "<h1>Hello world!</h1>";
     if (req.getUrl().valueLength == 1) {
       res->end(s.data(), s.length());
@@ -95,7 +97,8 @@ int main() {
     std::cout << "Connected!!!" << std::endl;
   });
 
-  h.onDisconnection([&h](uWS::WebSocket<uWS::SERVER>* ws, int code, char *message, size_t length) {
+  h.onDisconnection([&h](uWS::WebSocket<uWS::SERVER>* ws, int code,
+                         char *message, size_t length) {
     ws->close();
     std::cout << "Disconnected" << std::endl;
   });
