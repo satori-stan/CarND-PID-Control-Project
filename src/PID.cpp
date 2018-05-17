@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <iostream>
 #include "PID.h"
 
 using namespace std;
@@ -6,12 +7,12 @@ using Clock = chrono::high_resolution_clock;
 
 PID::PID(double minimum_value, double maximum_value) :
     has_previous_frame_data_(false),
-    output_min_(minimum_value),
-    output_max_(maximum_value),
     Kp_(1.0),
     Ki_(1.0),
     Kd_(1.0),
-    integral_cte_(0.0) {}
+    integral_cte_(0.0),
+    output_min_(minimum_value),
+    output_max_(maximum_value) {}
 
 PID::~PID() {}
 
@@ -19,6 +20,7 @@ void PID::Init(double Kp, double Ki, double Kd) {
   Kp_ = Kp;
   Ki_ = Ki;
   Kd_ = Kd;
+  cout << "Kp: " << Kp << " Ki: " << Ki << " Kd: " << Kd << endl;
 }
 
 /*
