@@ -8,7 +8,7 @@ set(CMAKE_CXX_STANDARD 11)
 set(CXX_FLAGS "-Wall")
 set(CMAKE_CXX_FLAGS "${CXX_FLAGS}")
 
-set(sources src/PID.cpp src/main.cpp)
+set(sources src/PID.cpp src/main.cpp src/running_average.cpp)
 
 include_directories(/usr/local/include)
 link_directories(/usr/local/lib)
@@ -30,6 +30,7 @@ link_directories("C:/Program\ Files\ (x86)/vcpkg/installed/x86-windows/lib")  # 
 endif(${CMAKE_SYSTEM_NAME} MATCHES "Windows") 
 
 add_executable(pid ${sources})
+file(COPY src/params.txt DESTINATION ${CMAKE_BINARY_DIR})
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Windows") 
   # At least if using vcpkg
