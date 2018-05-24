@@ -3,7 +3,7 @@
 #include <math.h>
 #include <uWS/uWS.h>
 #include "json.hpp"
-#include "running_average.h"
+#include "twiddler.h"
 #include "PID.h"
 
 // for convenience
@@ -35,31 +35,47 @@ std::string hasData(std::string s) {
   return "";
 }
 
-int main() {
+int main(int argc, char** argv) {
   uWS::Hub h;
 
   PID steering_pid(-1.0, 1.0);
-  PID throttle_pid(0.01, 1.0);
+  //PID throttle_pid(-1.0, 1.0);
 
-  RunningAverage max_cte;
-  RunningAverage max_speed;
+  double sum_cte_2 = 0.0;
+  //RunningAverage max_speed;
+  //int steps = 0;
+
+  bool twiddle_mode = argc > 1;
+  double p, i, d;
 
   std::ifstream config_file("params.txt");
   if (config_file.is_open()) {
     // Read the pid controller parameters from file
-    double p, i, d;
     config_file >> p >> i >> d;
-    steering_pid.Init(p, i, d);
-    config_file >> p >> i >> d;
-    throttle_pid.Init(p, i, d);
+    //throttle_pid.Init(p, i, d);
     config_file.close();
   } else {
     // Initialize the pid controllers with sensible values.
-    steering_pid.Init(0.2, 3.0, 0.004);
-    throttle_pid.Init(1.0, 3.0, 0.004);
+    p = 0.2;
+    i = 3.0;
+    d = 0.004;
+    //throttle_pid.Init(1.0, 3.0, 0.004);
   }
 
-  h.onMessage([&steering_pid, &throttle_pid, &max_cte, &max_speed](uWS::WebSocket<uWS::SERVER>* ws, char *data,
+  steering_pid.Init(p, i, d);
+
+  std::vector<double> parameters;
+  std::vector<double> delta {1.0, 1.0, 1.0};
+
+  if (twiddle_mode) {
+    parameters.push_back(p);
+    parameters.push_back(i);
+    parameters.push_back(d);
+  }
+
+  Twiddler twiddler {2000, 0.0001, parameters, delta};
+
+  h.onMessage([&twiddle_mode, &steering_pid, &sum_cte_2, &twiddler](uWS::WebSocket<uWS::SERVER>* ws, char *data,
                               size_t length, uWS::OpCode opCode) {
     // "42" at the start of the message means there's a websocket message event.
     // The 4 signifies a websocket message
@@ -75,20 +91,46 @@ int main() {
           double speed = std::stod(j[1]["speed"].get<std::string>());
           double angle = std::stod(j[1]["steering_angle"].get<std::string>());
           double steer_value = steering_pid.Correct(cte);
-          double throttle_value = throttle_pid.Correct(cte);
+          double throttle_value = 0.2; //1 - throttle_pid.Correct(cte);
           
           // DEBUG
           //std::cout << "CTE: " << cte << " Steering Value: " << steer_value << std::endl;
 
-          std::cout << "Average CTE^2: " << max_cte.Add(std::pow(cte, 2))
-              << " Average Speed: " << max_speed.Add(speed) << std::endl;
+          sum_cte_2 += std::pow(cte, 2);
+          //std::cout << "Sum CTE^2: " << sum_cte_2
+              //<< " Average Speed: " << max_speed.Add(speed)
+              //<< " Throttle: " << throttle_value << std::endl;
 
-          json msgJson;
-          msgJson["steering_angle"] = steer_value;
-          msgJson["throttle"] = throttle_value;
-          auto msg = "42[\"steer\"," + msgJson.dump() + "]";
-          //std::cout << msg << std::endl;
-          ws->send(msg.data(), msg.length(), uWS::OpCode::TEXT);
+
+          if (twiddle_mode && twiddler.HasFinishedSteps()) {
+            if (twiddler.IsInTolerance()) {
+              // TODO: Write parameters to file
+              std::cout << "Kp: " << steering_pid.Kp_
+                  << " Ki: " << steering_pid.Ki_
+                  << " Kd: " << steering_pid.Kd_ << std::endl;
+              // TODO: Stop simulation
+              // For now just stop car
+              json msgJson;
+              msgJson["steering_angle"] = 0;
+              msgJson["throttle"] = 0;
+              auto msg = "42[\"steer\"," + msgJson.dump() + "]";
+              ws->send(msg.data(), msg.length(), uWS::OpCode::TEXT);
+            } else {
+              std::vector<double> new_params = twiddler.Twiddle(sum_cte_2);
+              steering_pid.Init(new_params[0], new_params[1], new_params[2]);
+              sum_cte_2 = 0.0;
+              // Reset simulator
+              std::string msg = "42[\"reset\",{}]";
+              ws->send(msg.data(), msg.length(), uWS::OpCode::TEXT);
+            }
+          } else {
+            json msgJson;
+            msgJson["steering_angle"] = steer_value;
+            msgJson["throttle"] = throttle_value;
+            auto msg = "42[\"steer\"," + msgJson.dump() + "]";
+            //std::cout << msg << std::endl;
+            ws->send(msg.data(), msg.length(), uWS::OpCode::TEXT);
+          }
         }
       } else {
         // Manual driving

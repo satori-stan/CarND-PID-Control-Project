@@ -8,7 +8,7 @@ set(CMAKE_CXX_STANDARD 11)
 set(CXX_FLAGS "-Wall")
 set(CMAKE_CXX_FLAGS "${CXX_FLAGS}")
 
-set(sources src/PID.cpp src/main.cpp src/running_average.cpp)
+set(sources src/PID.cpp src/main.cpp src/running_average.cpp src/twiddler.cpp)
 
 include_directories(/usr/local/include)
 link_directories(/usr/local/lib)
