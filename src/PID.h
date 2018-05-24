@@ -7,13 +7,6 @@
 class PID {
  public:
   /**
-   * Errors
-   */
-  double p_error_;
-  double i_error_;
-  double d_error_;
-
-  /**
    * Coefficients
    */ 
   double Kp_;
@@ -23,7 +16,7 @@ class PID {
   /**
    * Constructor
    */
-  PID(double minimum_value, double maximum_value);
+  PID(const double minimum_value, const double maximum_value);
 
   /**
    * Destructor.
@@ -33,23 +26,12 @@ class PID {
   /**
    * Initialize PID.
    */
-  void Init(double Kp, double Ki, double Kd);
-
-  /**
-   * Update the PID error variables given cross track error.
-   *
-  void UpdateError(double cte);
-
-  /**
-   * Calculate the total PID error.
-   *
-  double TotalError();
-  */
+  void Init(const double Kp, const double Ki, const double Kd);
 
   /**
    * Calculate the controlled output
    */
-  double Correct(double cte);
+  double Correct(const double cte);
 
  private:
 
