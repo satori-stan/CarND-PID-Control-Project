@@ -1,10 +1,10 @@
+#include <iostream>
 #include <limits>
 #include <numeric>
 #include "twiddler.h"
 
 Twiddler::Twiddler(int steps, double tolerance, std::vector<double> parameters,
                    std::vector<double> delta) :
-
                    target_steps_(steps),
                    executed_steps_(0),
                    tolerance_(tolerance),
@@ -13,7 +13,9 @@ Twiddler::Twiddler(int steps, double tolerance, std::vector<double> parameters,
                    best_error_(std::numeric_limits<double>::max()),
                    parameter_index_(0),
                    state_(0),
-                   first_run_(true) {}
+                   first_run_(true) {
+                     std::cout << target_steps_ << std::endl;
+                   }
 // TODO: Validate both parameters and delta are the same length
 
 Twiddler::~Twiddler() {}
@@ -75,6 +77,7 @@ void Twiddler::ApplyDelta() {
       break;
   }
 }
+
 void Twiddler::NextParameter() {
   if (++parameter_index_ > (parameters_.size() - 1)) {
     parameter_index_ = 0;
