@@ -5,17 +5,15 @@
 
 Twiddler::Twiddler(int steps, double tolerance, std::vector<double> parameters,
                    std::vector<double> delta) :
-                   target_steps_(steps),
-                   executed_steps_(0),
-                   tolerance_(tolerance),
-                   parameters_(parameters),
-                   delta_(delta),
-                   best_error_(std::numeric_limits<double>::max()),
-                   parameter_index_(0),
-                   state_(0),
-                   first_run_(true) {
-                     std::cout << target_steps_ << std::endl;
-                   }
+    target_steps_(steps),
+    executed_steps_(0),
+    tolerance_(tolerance),
+    parameters_(parameters),
+    delta_(delta),
+    best_error_(std::numeric_limits<double>::max()),
+    parameter_index_(0),
+    state_(0),
+    first_run_(true) {}
 // TODO: Validate both parameters and delta are the same length
 
 Twiddler::~Twiddler() {}
@@ -29,7 +27,7 @@ bool Twiddler::IsInTolerance() {
 }
 
 std::vector<double> Twiddler::Twiddle(double sum_error_squared) {
-  double avg_error_squared = sum_error_squared / (2 * executed_steps_);
+  double avg_error_squared = sum_error_squared / executed_steps_;
   switch (state_) {
     case 0:
       // Only the very first case lands here

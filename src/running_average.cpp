@@ -19,3 +19,8 @@ double RunningAverage::Add(double new_value) {
 double RunningAverage::average() {
   return average_;
 }
+
+void RunningAverage::Reset() {
+  average_ = 0;
+  n_ = 0;
+}

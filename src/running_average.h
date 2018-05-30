@@ -13,6 +13,8 @@ class RunningAverage {
 
   double average();
 
+  void Reset();
+
  private:
 
   int32_t n_;
