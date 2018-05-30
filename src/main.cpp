@@ -150,10 +150,11 @@ int main(int argc, char** argv) {
 
           // Now, if we are in tunning mode, then we want to account the error
           // in a way that meets several objectives:
-          // - Drive close to the expected trajectory (low CTE)
-          // - Drive fast
-          // - Don't steer too hard
-          // - Don't accelerate too hard
+          // - Drive close to the expected trajectory (low CTE).
+          // - Drive fast.
+          // - Don't steer too hard.
+          // - Use as much throttle as possible. This prevents from going into
+          //   reverse.
           if (twiddle_mode) {
             avg_speed.Add(speed);
             avg_throttle.Add(throttle_value);
