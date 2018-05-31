@@ -11,7 +11,7 @@ A successful implementation requires:
 
 * Compilation on any platform (Linux, Mac, Windows)
 * Control the steering using a PID controller as taught in the lessons
-* Tune the controller's hyperparameters to drive safely around the track
+* Tune the controller's hyper parameters to drive safely around the track
 * Successfully complete at least a full lap around the track
 
 [image1]: ./Spreadsheet.png
@@ -25,7 +25,7 @@ The starter code provided for the project was already meant to compile correctly
 
 Since my current platform is Windows but I have low resources, I decided to go for a native approach to avoid the installation of such resource-intensive environments. This decision was originally taken during the implementation of the first project of the term [Extended-KalmanFilter](https://github.com/satori-stan/CarND-Extended-Kalman-Filter-Project). Then, it had a non-trivial time cost, which I was able to capitalize on for this project. There is little in the repository that will give my choice away, except for a couple of lines at the end of the CMakeLists.txt file where the names of the libraries are redefined when a Windows environment is found.
 
-The main program file (main.cpp) was modified initially to accommodate api changes in uWS 0.14.4 and finally to implement parts of the hyperparameter tunning algorithm. The main file receives a measurement package message from the simulator and passes it to the PID class, where the information is processed.
+The main program file (main.cpp) was modified initially to accommodate api changes in uWS 0.14.4 and finally to implement parts of the hyper parameter tuning algorithm. The main file receives a measurement package message from the simulator and passes it to the PID class, where the information is processed.
 
 #### Control of the steering using a PID controller as taught in the lesson
 
@@ -41,15 +41,15 @@ The last step in the correction method is a validation to make sure the output i
 
 The program creates two controllers on startup: one for steering and one for throttle, since it makes sense only to increase the speed when the car is on the expected trajectory and to decrease it when the car starts to stray. The controllers are instantiated in the main program method (main.cpp:42). Since creating the PID controllers requires selecting control output limits, the steering has -1 to 1 range consistent with the simulator's limits. The throttle controller has the same limit. This range will later allow us to control the car's maximum speed.
 
-The controllers' parameters are ideally stored in a configuration file (params.txt). This allows testing new coefficient values without the overhead of recompilation. The program reads the file if possible (main.cpp:68-95) or reverts to hardcoded values. The hardcoded values represent the best parameters found after tunning the system to drive around the lakeside track.
+The controllers' parameters are ideally stored in a configuration file (params.txt). This allows testing new coefficient values without the overhead of recompilation. The program reads the file if possible (main.cpp:68-95) or reverts to hardcoded values. The hardcoded values represent the best parameters found after tuning the system to drive around the lakeside track.
 
 With the controllers configured, each time a new reading is received from the sensors, the steering controller is called with the CTE to get a new steering value (main.cpp:134). As it is explained in the code, a factor is added to increase the response as the speed of the car increases. After that, the throttle controller is called with a combination of the CTE and steering values as input (main.cpp:145). This follows the logic that the target value to increase the speed is when the steering is set to going straight and we are driving along the desired track. Turning the wheels either for course correction or when following a curve should require the vehicle's speed to drop.
 
-The output of the throttle controller is actually not used raw, but rather transformed (translated) to have a value consistent with the expected behavior. First, when the steering is zero, the throttle controller's CTE would be zero. At this point we want the car to reach maximum throttle (identified so far as 0.3) so the controller's output is subtracted from the maximum throttle. Second, the sign of the output is unrelevant to the system: we want a zero output when the tires are straight and up to twice the maximum throttle when the steering is maxed out to either direction so we use the absolute value of the controller's output. This is better than limiting the output of the controller since it provides the full range of controller's values.
+The output of the throttle controller is actually not used raw, but rather transformed (translated) to have a value consistent with the expected behavior. First, when the steering is zero, the throttle controller's CTE would be zero. At this point we want the car to reach maximum throttle (identified so far as 0.3) so the controller's output is subtracted from the maximum throttle. Second, the sign of the output is irrelevant to the system: we want a zero output when the tires are straight and up to twice the maximum throttle when the steering is maxed out to either direction so we use the absolute value of the controller's output. This is better than limiting the output of the controller since it provides the full range of controller's values.
 
-#### Tune the controller's hyperparameters to drive safely around the track
+#### Tune the controller's hyper parameters to drive safely around the track
 
-Tunning of the controllers was a very labor-intensive task. Initially, the tunning was done manually, following the Twiddle algorithm from the lessons in a spreadsheet.
+Tuning of the controllers was a very labor-intensive task. Initially, the tuning was done manually, following the Twiddle algorithm from the lessons in a spreadsheet.
 
 ![Screen capture of manual twiddling][image1]
 
@@ -59,13 +59,13 @@ The new class is defined in twiddler.h and implemented in twiddler.cpp. It has a
 
 The class is instantiated in the main program (main.cpp:103) and it takes as parameters: the number of steps to allow for the test, the tolerance for the sum of the deltas (under which the test will stop) and the parameter and delta vectors.
 
-The program will only go into tunning mode if an argument is provided. This argument represents the number of steps for each loop with the current parameter set.
+The program will only go into tuning mode if an argument is provided. This argument represents the number of steps for each loop with the current parameter set.
 
-Once the program is running, the square of the CTE is accumulated. Following the twiddle algorithm, we check with every measurement received from the sensors (assuming we are in tunning mode) if the number of steps for the test has been reached. Checking if the number of steps has been reached also increases the step count (twiddler.cpp:21). When the desired number of steps have been elapsed, if the deltas are already under the tolerance (which means that further adjustments will have little or no effect) the program will disconnect from the sensors and stop the car. If, on the other hand, the parameters can still be tunned then they are (using the sum of squared CTE values) and the controllers are re-initialized.
+Once the program is running, the square of the CTE is accumulated. Following the twiddle algorithm, we check with every measurement received from the sensors (assuming we are in tuning mode) if the number of steps for the test has been reached. Checking if the number of steps has been reached also increases the step count (twiddler.cpp:21). When the desired number of steps have been elapsed, if the deltas are already under the tolerance (which means that further adjustments will have little or no effect) the program will disconnect from the sensors and stop the car. If, on the other hand, the parameters can still be tuned then they are (using the sum of squared CTE values) and the controllers are re-initialized.
 
 The main twiddle algorithm follows the rules:
 1. Increase the current parameter by the delta and test. If the average of the squared error is better than the previous, keep the new parameter value and increase the delta by a factor. Move to the next parameter.
-1. If the result is not improved by increasing the parameter value, decrease it (from it's setting before the increase) by the delta and test. If the result is better than the previous, keep the new parameter value and increase the delta by a factor. Move to the next parameter.
+1. If the result is not improved by increasing the parameter value, decrease it (from its setting before the increase) by the delta and test. If the result is better than the previous, keep the new parameter value and increase the delta by a factor. Move to the next parameter.
 1. If the result is not improved by decreasing the parameter value, decrease the delta by a factor and move to the next parameter.
 
 The implementation is somewhat hard to follow since it was modified to avoid wrapping the main program. It behaves as a state machine. The main Twiddle code (twiddler.cpp:29-63) handles the calculation of the squared error average, checking to see if the value is better than the last and returning the updated parameter vector. The ApplyDelta (lines 70 to 85) and NextParameter (lines 87 to 92) functions handle the parameter adjustments and keeping track of which parameter is being modified in turn, respectively.
@@ -76,7 +76,7 @@ Here is a small animation of the car driving around the track.
 
 ![Car controlled by PID in lakeside track simulator][image2]
 
-The maximum average speed achieved was ...
+The maximum average speed achieved was around 22 mph and although it wouldn't be a comfortable ride, it would be a safe one (as long as we are the only vehicle in the track).
 
 ## Dependencies
 
