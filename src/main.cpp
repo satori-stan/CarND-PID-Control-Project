@@ -112,7 +112,7 @@ int main(int argc, char** argv) {
               &avg_throttle,
               &previous_angle,
               &kMaxThrottle](
-              uWS::WebSocket<uWS::SERVER>* ws,
+              uWS::WebSocket<uWS::SERVER> ws,
               char *data,
               size_t length,
               uWS::OpCode opCode) {
@@ -180,7 +180,7 @@ int main(int argc, char** argv) {
               json msgJson;
               msgJson["steering_angle"] = 0;
               msgJson["throttle"] = 0;
-              ws->close();
+              ws.close();
             } else {
               std::cout <<
                  "Average speed: " << avg_speed.average() << std::endl <<
@@ -197,7 +197,7 @@ int main(int argc, char** argv) {
               avg_throttle.Reset();
               // Reset simulator
               std::string msg = "42[\"reset\",{}]";
-              ws->send(msg.data(), msg.length(), uWS::OpCode::TEXT);
+              ws.send(msg.data(), msg.length(), uWS::OpCode::TEXT);
             }
           } else {
             json msgJson;
@@ -205,13 +205,13 @@ int main(int argc, char** argv) {
             msgJson["throttle"] = throttle_value;
             auto msg = "42[\"steer\"," + msgJson.dump() + "]";
             //std::cout << msg << std::endl;
-            ws->send(msg.data(), msg.length(), uWS::OpCode::TEXT);
+            ws.send(msg.data(), msg.length(), uWS::OpCode::TEXT);
           }
         }
       } else {
         // Manual driving
         std::string msg = "42[\"manual\",{}]";
-        ws->send(msg.data(), msg.length(), uWS::OpCode::TEXT);
+        ws.send(msg.data(), msg.length(), uWS::OpCode::TEXT);
       }
     }
   });
@@ -229,19 +229,19 @@ int main(int argc, char** argv) {
     }
   });
 
-  h.onConnection([&h](uWS::WebSocket<uWS::SERVER>* ws, uWS::HttpRequest req) {
+  h.onConnection([&h](uWS::WebSocket<uWS::SERVER> ws, uWS::HttpRequest req) {
     std::cout << "Connected!!!" << std::endl;
   });
 
-  h.onDisconnection([&h](uWS::WebSocket<uWS::SERVER>* ws, int code,
+  h.onDisconnection([&h](uWS::WebSocket<uWS::SERVER> ws, int code,
                          char *message, size_t length) {
-    ws->close();
+    ws.close();
     std::cout << "Disconnected" << std::endl;
   });
 
   int port = 4567;
-  auto host = "127.0.0.1";
-  if (h.listen(host, port)) {
+  //auto host = "127.0.0.1";
+  if (h.listen(port)) {
     std::cout << "Listening to port " << port << std::endl;
   } else {
     std::cerr << "Failed to listen to port" << std::endl;
